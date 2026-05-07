@@ -208,7 +208,7 @@ SmbPhotoLibrary/
 
 ## 📬 联系与反馈
 
-如有问题或建议，欢迎提交 [Issue](https://github.com/yourusername/SmbPhotoLibrary/issues) 或 Pull Request！
+如有问题或建议，欢迎提交 [Issue](https://github.com/jiajin20/SmbPhotoLibrary/issues) 或 Pull Request！
 
 ---
 
