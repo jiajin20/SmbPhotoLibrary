@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- 手机/Pad 主题（NoActionBar，MaterialToolbar 替代） -->
+    <style name="Theme.SmbPhotoLibrary" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryDark">@color/primary_dark</item>
+        <item name="colorAccent">@color/accent</item>
+        <item name="android:windowBackground">@color/background</item>
+        <item name="android:statusBarColor">@color/primary_dark</item>
+        <item name="android:navigationBarColor">@color/primary_dark</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+
+        <!-- Toolbar 样式 -->
+        <item name="toolbarStyle">@style/Widget.SmbPhoto.Toolbar</item>
+
+        <!-- Drawer 样式 -->
+        <item name="drawerArrowStyle">@style/Widget.SmbPhoto.DrawerArrow</item>
+    </style>
+
+    <style name="Widget.SmbPhoto.Toolbar" parent="Widget.MaterialComponents.Toolbar.Primary">
+        <item name="titleTextAppearance">@style/TextAppearance.SmbPhoto.ToolbarTitle</item>
+        <item name="subtitleTextAppearance">@style/TextAppearance.SmbPhoto.ToolbarSubtitle</item>
+    </style>
+
+    <style name="TextAppearance.SmbPhoto.ToolbarTitle" parent="TextAppearance.MaterialComponents.Headline6">
+        <item name="android:textSize">18sp</item>
+        <item name="android:textColor">@color/on_primary</item>
+    </style>
+
+    <style name="TextAppearance.SmbPhoto.ToolbarSubtitle" parent="TextAppearance.MaterialComponents.Subtitle1">
+        <item name="android:textSize">13sp</item>
+        <item name="android:textColor">#B3FFFFFF</item>
+    </style>
+
+    <style name="Widget.SmbPhoto.DrawerArrow" parent="Widget.AppCompat.DrawerArrowToggle">
+        <item name="color">@color/on_primary</item>
+    </style>
+
+    <!-- 相簿卡片样式 -->
+    <style name="Widget.SmbPhoto.AlbumCard" parent="">
+        <item name="cardCornerRadius">16dp</item>
+        <item name="cardElevation">3dp</item>
+        <item name="cardBackgroundColor">@color/card_background</item>
+        <item name="contentPadding">0dp</item>
+        <item name="cardPreventCornerOverlap">true</item>
+    </style>
+
+    <!-- 图片网格项样式 -->
+    <style name="Widget.SmbPhoto.PhotoItem" parent="">
+        <item name="cardCornerRadius">10dp</item>
+        <item name="cardElevation">2dp</item>
+        <item name="cardBackgroundColor">@color/card_background</item>
+        <item name="cardPreventCornerOverlap">true</item>
+    </style>
+
+    <!-- 空状态文字 -->
+    <style name="TextAppearance.SmbPhoto.EmptyState" parent="">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/text_secondary</item>
+        <item name="android:lineSpacingMultiplier">1.4</item>
+    </style>
+
+    <!-- CollapsingToolbar 标题样式 -->
+    <style name="ToolbarExpandedTitle" parent="TextAppearance.MaterialComponents.Headline5">
+        <item name="android:textSize">22sp</item>
+        <item name="android:textColor">@color/on_primary</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="ToolbarCollapsedTitle" parent="TextAppearance.MaterialComponents.Headline6">
+        <item name="android:textSize">18sp</item>
+        <item name="android:textColor">@color/on_primary</item>
+    </style>
+
+    <!-- TV / Leanback 主题（无 ActionBar，全屏，深色背景） -->
+    <style name="Theme.SmbPhotoLibrary.Leanback" parent="Theme.AppCompat.NoActionBar">
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryDark">@color/primary_dark</item>
+        <item name="colorOnPrimary">@color/on_primary</item>
+        <item name="colorSecondary">@color/accent</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowBackground">@color/tv_background</item>
+    </style>
+
+    <!-- 流式播放器全屏主题 -->
+    <style name="Theme.SmbPhotoLibrary.Fullscreen" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowBackground">@android:color/black</item>
+        <item name="android:statusBarColor">@android:color/black</item>
+        <item name="android:navigationBarColor">@android:color/black</item>
+    </style>
+
+</resources>

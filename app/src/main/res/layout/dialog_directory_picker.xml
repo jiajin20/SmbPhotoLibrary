@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="8dp"
+    android:minHeight="400dp"
+    android:maxHeight="560dp">
+
+    <!-- 当前路径显示 -->
+    <TextView
+        android:id="@+id/tvCurrentPath"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="\\\\192.168.1.100\\photos"
+        android:textSize="13sp"
+        android:textColor="?android:attr/textColorSecondary"
+        android:padding="8dp"
+        android:background="#0D000000"
+        android:maxLines="2"
+        android:ellipsize="middle"
+        android:layout_marginBottom="4dp" />
+
+    <!-- 提示文字 -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="点击目录进入，选择后点确认使用该目录"
+        android:textSize="12sp"
+        android:textColor="?android:attr/textColorTertiary"
+        android:paddingBottom="8dp" />
+
+    <!-- 目录列表 -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvDirectories"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:padding="4dp" />
+
+</LinearLayout>

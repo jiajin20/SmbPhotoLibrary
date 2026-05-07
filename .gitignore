@@ -1,0 +1,39 @@
+# ===== Gradle / Build =====
+.gradle/
+build/
+*/build/
+*.apk
+*.ap_
+*.dex
+*.class
+*.log
+buildSrc/.gradle/
+
+# ===== IDE =====
+.idea/
+*.iml
+*.iws
+*.ipr
+.DS_Store
+*.swp
+*.swo
+*~
+
+# ===== Android =====
+*.keystore
+*.jks
+local.properties
+*.apk
+*.ap_
+release.jks
+release.keystore
+
+# ===== Kotlin =====
+.kotlin/
+
+# ===== WorkBuddy =====
+.workbuddy/
+
+# ===== OS =====
+Thumbs.db
+Desktop.ini

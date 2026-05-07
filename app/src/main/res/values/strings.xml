@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">家庭相册</string>
+    <string name="empty_hint">没有找到图片，请下拉刷新或重新配置服务器</string>
+    <string name="empty_albums_hint">该目录下没有包含照片的文件夹</string>
+    <string name="empty_album_photos_hint">此相簿中没有照片</string>
+    <string name="photo_thumbnail">图片缩略图</string>
+    <string name="photo_detail">图片详情</string>
+
+    <!-- 导航 & Drawer -->
+    <string name="nav_servers">服务器列表</string>
+    <string name="nav_add_server">添加新服务器</string>
+    <string name="nav_manage_servers">管理服务器</string>
+    <string name="drawer_open">打开导航菜单</string>
+    <string name="drawer_close">关闭导航菜单</string>
+
+    <!-- 相簿 -->
+    <string name="albums_title">相簿</string>
+    <string name="album_photo_count">%d 张照片</string>
+    <string name="all_albums">全部相簿</string>
+    <string name="back_to_albums">返回相簿</string>
+
+    <!-- ServerConfig -->
+    <string name="hint_server_name">服务器名称（可选）</string>
+    <string name="hint_server_ip">服务器 IP 地址（如 192.168.1.100）</string>
+    <string name="hint_share_name">共享目录名称（如 photos）</string>
+    <string name="hint_username">用户名（匿名访问可留空）</string>
+    <string name="hint_password">密码</string>
+    <string name="hint_root_path">根路径（可选，如 2024/旅行）</string>
+    <string name="remember_password">记住密码（加密存储）</string>
+    <string name="connect">连接</string>
+
+    <!-- 照片详情 -->
+    <string name="photo_page_indicator">%1$d / %2$d</string>
+    <string name="share_photo">分享</string>
+    <string name="save_to_gallery">保存到相册</string>
+    <string name="photo_saved">已保存：%1$s</string>
+    <string name="photo_save_failed">保存失败：请检查存储权限</string>
+    <string name="sharing">正在准备分享…</string>
+    <string name="share_failed">分享失败：%1$s</string>
+    <string name="saving">正在保存…</string>
+    <string name="saved_to_gallery">已保存至：%1$s</string>
+    <string name="save_failed">保存失败：请检查存储权限</string>
+
+    <!-- 菜单 -->
+    <string name="menu_sort">排序</string>
+    <string name="menu_sort_name">按名称</string>
+    <string name="menu_sort_date">按日期</string>
+    <string name="menu_sort_size">按大小</string>
+    <string name="menu_refresh">刷新</string>
+    <string name="menu_configure">管理服务器</string>
+
+    <!-- 视频 -->
+    <string name="video_play">播放视频</string>
+    <string name="video_loading">正在准备视频…</string>
+    <string name="video_play_error">视频播放失败</string>
+
+    <!-- 操作菜单 -->
+    <string name="delete_file">删除</string>
+    <string name="rename_file">重命名</string>
+    <string name="copy_file">复制</string>
+    <string name="move_file">移动</string>
+    <string name="download_album">下载相簿图片</string>
+    <string name="delete_album_confirm">确定要删除「%s」吗？此操作不可恢复！</string>
+    <string name="delete_file_confirm">确定要删除「%s」吗？此操作不可恢复！</string>
+    <string name="rename_success">重命名成功</string>
+    <string name="delete_success">已删除：%s</string>
+    <string name="deleting">正在删除…</string>
+
+    <!-- 退出确认 -->
+    <string name="exit_confirm_title">%s</string>
+    <string name="exit_confirm_message">确定要退出吗？</string>
+    <string name="exit_positive">退出</string>
+    <string name="exit_negative">取消</string>
+</resources>

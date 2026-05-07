@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 夜间背景色 -->
+    <color name="background">#121212</color>
+    <color name="surface">#1E1E1E</color>
+    <color name="surface_variant">#2A2A30</color>
+
+    <!-- 夜间卡片/组件色 -->
+    <color name="card_background">#1E1E1E</color>
+    <color name="card_ripple">#33FFFFFF</color>
+    <color name="drawer_background">#1A1A1A</color>
+    <color name="drawer_selected">#2A2A30</color>
+    <color name="divider">#2C2C30</color>
+
+    <!-- 夜间时间轴 -->
+    <color name="timeline_background">#1A1A1A</color>
+
+    <!-- 夜间缩略图 -->
+    <color name="thumbnail_placeholder">#2A2A30</color>
+
+    <!-- 夜间文字色 -->
+    <color name="text_primary">#E0E0E0</color>
+    <color name="text_secondary">#9E9E9E</color>
+
+    <!-- 夜间连接状态 -->
+    <color name="status_connected_bg">#1B3D1B</color>
+    <color name="status_connected_text">#66BB6A</color>
+</resources>

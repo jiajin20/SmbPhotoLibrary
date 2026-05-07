@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/tv_background">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="48dp"
+        android:gravity="center_horizontal">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/app_name"
+            android:textColor="@color/white"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="32dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="服务器配置"
+            android:textColor="#AAFFFFFF"
+            android:textSize="18sp"
+            android:layout_marginBottom="24dp" />
+
+        <!-- 服务器 IP -->
+        <EditText
+            android:id="@+id/etServerIp"
+            android:layout_width="480dp"
+            android:layout_height="wrap_content"
+            android:hint="服务器 IP 地址"
+            android:textColorHint="#66FFFFFF"
+            android:textColor="@color/white"
+            android:background="@drawable/tv_input_bg"
+            android:padding="16dp"
+            android:textSize="16sp"
+            android:inputType="text"
+            android:singleLine="true"
+            android:imeOptions="actionNext"
+            android:nextFocusDown="@+id/etShareName"
+            android:focusable="true"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 共享目录 -->
+        <EditText
+            android:id="@+id/etShareName"
+            android:layout_width="480dp"
+            android:layout_height="wrap_content"
+            android:hint="共享目录名（如 photos）"
+            android:textColorHint="#66FFFFFF"
+            android:textColor="@color/white"
+            android:background="@drawable/tv_input_bg"
+            android:padding="16dp"
+            android:textSize="16sp"
+            android:inputType="text"
+            android:singleLine="true"
+            android:imeOptions="actionNext"
+            android:nextFocusUp="@id/etServerIp"
+            android:nextFocusDown="@+id/etUsername"
+            android:focusable="true"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 用户名 -->
+        <EditText
+            android:id="@+id/etUsername"
+            android:layout_width="480dp"
+            android:layout_height="wrap_content"
+            android:hint="用户名（匿名可留空）"
+            android:textColorHint="#66FFFFFF"
+            android:textColor="@color/white"
+            android:background="@drawable/tv_input_bg"
+            android:padding="16dp"
+            android:textSize="16sp"
+            android:inputType="textNoSuggestions"
+            android:singleLine="true"
+            android:imeOptions="actionNext"
+            android:nextFocusUp="@id/etShareName"
+            android:nextFocusDown="@+id/etPassword"
+            android:focusable="true"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 密码 -->
+        <EditText
+            android:id="@+id/etPassword"
+            android:layout_width="480dp"
+            android:layout_height="wrap_content"
+            android:hint="密码"
+            android:textColorHint="#66FFFFFF"
+            android:textColor="@color/white"
+            android:background="@drawable/tv_input_bg"
+            android:padding="16dp"
+            android:textSize="16sp"
+            android:inputType="textPassword"
+            android:singleLine="true"
+            android:imeOptions="actionDone"
+            android:nextFocusUp="@id/etUsername"
+            android:nextFocusDown="@+id/btnConnect"
+            android:focusable="true"
+            android:layout_marginBottom="32dp" />
+
+        <!-- 连接按钮 -->
+        <Button
+            android:id="@+id/btnConnect"
+            android:layout_width="480dp"
+            android:layout_height="56dp"
+            android:text="连 接"
+            android:textSize="18sp"
+            android:textColor="@color/white"
+            android:background="@color/purple_500"
+            android:focusable="true"
+            android:nextFocusUp="@id/etPassword" />
+
+    </LinearLayout>
+
+</ScrollView>

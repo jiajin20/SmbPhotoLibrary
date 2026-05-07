@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ViewPager2 中视频页面的布局：缩略图 + 居中播放按钮 -->
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/videoContainer"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/photo_view_background">
+
+    <!-- 视频缩略图 -->
+    <ImageView
+        android:id="@+id/videoThumbnail"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop" />
+
+    <!-- 播放按钮（居中） -->
+    <ImageView
+        android:id="@+id/btnVideoPlay"
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        android:layout_gravity="center"
+        android:src="@drawable/ic_play_circle"
+        android:contentDescription="播放视频"
+        android:background="?attr/selectableItemBackgroundBorderless" />
+
+</FrameLayout>

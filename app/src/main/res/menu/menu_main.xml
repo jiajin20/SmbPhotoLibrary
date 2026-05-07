@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/action_refresh"
+        android:icon="@android:drawable/ic_menu_rotate"
+        android:title="@string/menu_refresh"
+        app:showAsAction="always"
+        app:actionLayout="@layout/action_refresh_with_text" />
+
+    <item
+        android:id="@+id/action_connect"
+        android:icon="@android:drawable/ic_menu_manage"
+        android:title="@string/menu_configure"
+        app:showAsAction="never" />
+
+</menu>

@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 网络权限 -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+
+    <!-- 媒体库读写权限（全版本兼容） -->
+    <!-- Android 5-9 需要，Android 10-12 读取时需要，Android 13+ 已被 READ_MEDIA_IMAGES 替代 -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <!-- Android 5-9 写入相册时需要，Android 10+ 通过 MediaStore 无需此权限 -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+
+    <!-- Android 13+ 分类媒体权限 -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+
+    <!-- ============ 硬件特性声明 ============ -->
+
+    <!-- 触摸屏非必须（TV 没有触摸屏） -->
+    <uses-feature android:name="android.hardware.touchscreen"
+        android:required="false" />
+
+    <!-- 非触摸屏导航（TV 使用遥控器/D-pad） -->
+    <uses-feature android:name="android.hardware.touchscreen.multitouch"
+        android:required="false" />
+    <uses-feature android:name="android.hardware.touchscreen.multitouch.distinct"
+        android:required="false" />
+    <uses-feature android:name="android.hardware.touchscreen.multitouch.jazzhand"
+        android:required="false" />
+
+    <!-- TV 不需要电话功能 -->
+    <uses-feature android:name="android.hardware.telephony"
+        android:required="false" />
+
+    <!-- TV 不需要 GPS -->
+    <uses-feature android:name="android.hardware.location.gps"
+        android:required="false" />
+    <uses-feature android:name="android.hardware.location.network"
+        android:required="false" />
+
+    <!-- TV 不需要摄像头 -->
+    <uses-feature android:name="android.hardware.camera"
+        android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus"
+        android:required="false" />
+
+    <!-- TV 不需要蓝牙 -->
+    <uses-feature android:name="android.hardware.bluetooth"
+        android:required="false" />
+
+    <!-- TV 不需要麦克风 -->
+    <uses-feature android:name="android.hardware.microphone"
+        android:required="false" />
+
+    <!-- TV 不需要传感器 -->
+    <uses-feature android:name="android.hardware.sensor.accelerometer"
+        android:required="false" />
+    <uses-feature android:name="android.hardware.sensor.compass"
+        android:required="false" />
+    <uses-feature android:name="android.hardware.sensor.gyroscope"
+        android:required="false" />
+
+    <!-- Leanback：声明为 TV 兼容应用（required=false 表示也兼容手机/Pad） -->
+    <uses-feature android:name="android.software.leanback"
+        android:required="false" />
+
+    <!-- USB 主机（部分 TV 需要） -->
+    <uses-feature android:name="android.hardware.usb.host"
+        android:required="false" />
+
+    <!-- 声明支持大屏 -->
+    <supports-screens
+        android:smallScreens="true"
+        android:normalScreens="true"
+        android:largeScreens="true"
+        android:xlargeScreens="true"
+        android:resizeable="true"
+        android:anyDensity="true" />
+
+    <application
+        android:name=".SmbPhotoApplication"
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.SmbPhotoLibrary"
+        android:requestLegacyExternalStorage="true"
+        android:networkSecurityConfig="@xml/network_security_config">
+
+        <!-- ====== 主界面（手机 / Pad）====== -->
+        <activity
+            android:name=".ui.activity.MainActivity"
+            android:exported="true"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|uiMode"
+            android:windowSoftInputMode="adjustResize">
+            <!-- 手机/Pad Launcher -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- ====== TV 主界面 ====== -->
+        <activity
+            android:name=".ui.activity.TvMainActivity"
+            android:exported="true"
+            android:theme="@style/Theme.SmbPhotoLibrary.Leanback"
+            android:configChanges="orientation|screenSize|keyboard|keyboardHidden"
+            android:banner="@drawable/ic_tv_banner">
+            <!-- TV Launcher -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- 图片详情界面 -->
+        <activity
+            android:name=".ui.activity.PhotoDetailActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|uiMode"
+            android:parentActivityName=".ui.activity.MainActivity" />
+
+        <!-- 服务器配置界面 -->
+        <activity
+            android:name=".ui.activity.ServerConfigActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|uiMode"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- TV 服务器配置界面 -->
+        <activity
+            android:name=".ui.activity.TvServerConfigActivity"
+            android:exported="false"
+            android:theme="@style/Theme.SmbPhotoLibrary.Leanback" />
+
+        <!-- 流式视频播放器（边加载边播，播完自动清理） -->
+        <activity
+            android:name=".streaming.StreamingVideoPlayerActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize"
+            android:theme="@style/Theme.SmbPhotoLibrary.Fullscreen" />
+
+        <!-- FileProvider：用于分享/保存图片时的 URI 授权 -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+    </application>
+
+</manifest>

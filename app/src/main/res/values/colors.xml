@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 主色调：温暖蓝紫系（家庭感） -->
+    <color name="primary">#5B6ABF</color>
+    <color name="primary_dark">#4A59AA</color>
+    <color name="primary_light">#C5CAE9</color>
+    <color name="accent">#FF7043</color>
+    <color name="accent_dark">#F4511E</color>
+
+    <!-- 语义色 -->
+    <color name="surface">#FFFFFF</color>
+    <color name="surface_variant">#F8F9FE</color>
+    <color name="background">#F5F6FA</color>
+    <color name="background_dark">#121212</color>
+    <color name="error">#EF5350</color>
+    <color name="on_primary">#FFFFFF</color>
+    <color name="on_surface">#1E1E2E</color>
+    <color name="on_surface_variant">#6B7280</color>
+
+    <!-- 卡片 & 组件 -->
+    <color name="card_background">#FFFFFF</color>
+    <color name="card_ripple">#EEF0FA</color>
+    <color name="drawer_background">#FAFBFF</color>
+    <color name="drawer_selected">#EEF0FA</color>
+    <color name="divider">#E8EAF0</color>
+
+    <!-- 时间轴背景 -->
+    <color name="timeline_background">#F0F2F8</color>
+
+    <!-- 连接状态 -->
+    <color name="status_connected_bg">#E8F5E9</color>
+    <color name="status_connected_text">#4CAF50</color>
+
+    <!-- 图片相关 -->
+    <color name="thumbnail_placeholder">#EEEFF5</color>
+    <color name="thumbnail_overlay">#66000000</color>
+    <color name="photo_view_background">#000000</color>
+
+    <!-- 文字色 -->
+    <color name="text_primary">#1E1E2E</color>
+    <color name="text_secondary">#6B7280</color>
+    <color name="text_on_image">#FFFFFF</color>
+    <color name="text_on_image_subtle">#B3FFFFFF</color>
+
+    <!-- 兼容旧名（避免其他引用报错） -->
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">@color/primary</color>
+    <color name="purple_700">@color/primary_dark</color>
+    <color name="teal_200">@color/accent</color>
+    <color name="teal_700">@color/accent_dark</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="tv_background">#FF1A1A2E</color>
+    <color name="tv_card_bg">#FF16213E</color>
+    <color name="tv_focused">#FFBB86FC</color>
+</resources>

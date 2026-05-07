@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 动态服务器列表会插入到这里（groupId=0） -->
+
+    <item
+        android:id="@+id/nav_add_server"
+        android:icon="@drawable/ic_add_server"
+        android:title="@string/nav_add_server" />
+    <item
+        android:id="@+id/nav_manage_servers"
+        android:icon="@drawable/ic_server_white"
+        android:title="@string/nav_manage_servers" />
+</menu>
