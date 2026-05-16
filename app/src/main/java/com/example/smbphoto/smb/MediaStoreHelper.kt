@@ -137,6 +137,7 @@ class MediaStoreHelper @Inject constructor(
             filename.endsWith(".webp", true) -> "image/webp"
             filename.endsWith(".gif", true) -> "image/gif"
             filename.endsWith(".bmp", true) -> "image/bmp"
+            filename.endsWith(".heic", true) || filename.endsWith(".heif", true) -> "image/heic"
             else -> "image/*"
         }
     }

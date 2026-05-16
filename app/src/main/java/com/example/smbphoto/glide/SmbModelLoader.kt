@@ -13,6 +13,7 @@ import java.io.InputStream
  * Glide ModelLoader：将 SmbImageFile 映射为 InputStream
  *
  * 通过 SmbGlideModule 注册到 Glide 加载管道中。
+ * 目标尺寸传递给 DataFetcher，用于通知解码器优化。
  */
 class SmbModelLoader(
     private val smbManager: SmbManager
@@ -25,16 +26,13 @@ class SmbModelLoader(
         options: Options
     ): ModelLoader.LoadData<InputStream> {
         return ModelLoader.LoadData(
-            ObjectKey(model.cacheKey), // 确保同一文件使用相同缓存键
-            SmbDataFetcher(model, smbManager)
+            ObjectKey(model.cacheKey),
+            SmbDataFetcher(model, smbManager, width, height)
         )
     }
 
     override fun handles(model: SmbImageFile): Boolean = true
 
-    /**
-     * Factory：由 SmbGlideModule 持有 SmbManager 后提供给 Glide 注册
-     */
     class Factory(private val smbManager: SmbManager) : ModelLoaderFactory<SmbImageFile, InputStream> {
         override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<SmbImageFile, InputStream> =
             SmbModelLoader(smbManager)

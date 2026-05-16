@@ -6,6 +6,9 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 
+    <!-- APK 安装权限（Android 8.0+ 需要） -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
     <!-- 媒体库读写权限（全版本兼容） -->
     <!-- Android 5-9 需要，Android 10-12 读取时需要，Android 13+ 已被 READ_MEDIA_IMAGES 替代 -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"

@@ -110,4 +110,12 @@ dependencies {
     implementation(libs.media3.exoplayer)
     implementation(libs.media3.ui)
     implementation(libs.media3.session)
+
+    // ExifInterface - 读取 JPEG/HEIC EXIF 拍摄时间
+    implementation(libs.exifinterface)
+
+    // Room 数据库 - EXIF 索引存储
+    implementation(libs.room.runtime)
+    implementation(libs.room.ktx)
+    ksp(libs.room.compiler)
 }

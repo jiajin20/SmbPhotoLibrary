@@ -34,6 +34,7 @@ class AlbumAdapter(
             binding.tvPhotoCount.text = "${album.photoCount} 张"
 
             // 加载封面图（取相簿第一张图作为封面缩略图）
+            // 重要：SMB 远程文件不使用磁盘缓存（DiskCacheStrategy.NONE）
             if (!album.coverPath.isNullOrBlank()) {
                 val coverImage = SmbImageFile(
                     name = album.coverPath.substringAfterLast("\\"),
@@ -44,7 +45,7 @@ class AlbumAdapter(
                     .load(coverImage)
                     .placeholder(R.drawable.ic_image_placeholder)
                     .error(R.drawable.ic_image_placeholder)
-                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)
                     .override(200, 160)
                     .centerCrop()
                     .into(binding.ivCover)

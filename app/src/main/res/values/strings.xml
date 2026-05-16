@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">家庭相册</string>
+    <string name="app_name">SMB家庭相册</string>
     <string name="empty_hint">没有找到图片，请下拉刷新或重新配置服务器</string>
     <string name="empty_albums_hint">该目录下没有包含照片的文件夹</string>
     <string name="empty_album_photos_hint">此相簿中没有照片</string>

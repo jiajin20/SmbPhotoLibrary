@@ -2,6 +2,7 @@
 .gradle/
 build/
 */build/
+**/build/
 *.apk
 *.ap_
 *.dex
@@ -18,22 +19,40 @@ buildSrc/.gradle/
 *.swp
 *.swo
 *~
+.vscode/
 
 # ===== Android =====
 *.keystore
 *.jks
 local.properties
-*.apk
-*.ap_
 release.jks
 release.keystore
+*.hprof
 
 # ===== Kotlin =====
 .kotlin/
+.kotlin_symbols/
 
 # ===== WorkBuddy =====
 .workbuddy/
 
-# ===== OS =====
-Thumbs.db
-Desktop.ini
+# ===== Build Logs =====
+build_*.log
+build_*.err
+build_out*.txt
+build*.log
+build*.err
+*.log
+
+# ===== Build Scripts =====
+build_apk.bat
+build_*.bat
+*.sh
+
+# ===== Documentation =====
+project_overview.html
+*.html
+
+# ===== Local Files =====
+nul
+*.tmp

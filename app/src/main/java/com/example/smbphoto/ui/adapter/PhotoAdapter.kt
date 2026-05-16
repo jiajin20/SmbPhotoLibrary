@@ -42,11 +42,14 @@ class PhotoAdapter(
                 binding.tvDuration.text = formatFileSize(item.fileSize)
             } else {
                 // 图片：直接用 Glide 加载 SMB 图片
+                // 重要：SMB 远程文件不使用磁盘缓存（DiskCacheStrategy.NONE）
+                // 原因：1. 避免 Glide 缓存写入时的异步读取与 SMB 连接生命周期冲突导致 NPE
+                //      2. SMB 文件已在网络上，直接从网络读取即可，重复缓存浪费空间
                 Glide.with(binding.ivThumbnail)
                     .load(item)
                     .placeholder(R.drawable.ic_image_placeholder)
                     .error(R.drawable.ic_image_broken)
-                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)
                     .override(160, 160)
                     .centerCrop()
                     .into(binding.ivThumbnail)

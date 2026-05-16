@@ -1,5 +1,6 @@
 package com.example.smbphoto.ui.viewmodel
 
+import android.app.Application
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -8,7 +9,9 @@ import com.example.smbphoto.data.model.SaveResult
 import com.example.smbphoto.data.model.ServerConfig
 import com.example.smbphoto.data.model.SmbImageFile
 import com.example.smbphoto.data.model.UiState
+import com.example.smbphoto.data.repository.ConnectionLostException
 import com.example.smbphoto.data.repository.SmbRepository
+import com.example.smbphoto.smb.ExifIndexManager
 import com.example.smbphoto.smb.SmbEntry
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -51,8 +54,26 @@ class PhotoViewModel @Inject constructor(
     private val _shareList = MutableStateFlow<List<String>>(emptyList())
     val shareList: StateFlow<List<String>> = _shareList.asStateFlow()
 
+    // ---- 分页状态 ----
+    private var currentPage = 0
+    private var hasMorePages = true
+    private var totalImageCount = 0
+    private var isLoadingMore = false
+
+    /** 分页是否还有更多数据 */
+    val hasMorePagesFlow = MutableStateFlow(true)
+
+    /** 总图片数量 */
+    val totalImageCountFlow = MutableStateFlow(0)
+
+    /** 是否正在加载更多 */
+    val isLoadingMoreFlow = MutableStateFlow(false)
+
     // 当前浏览路径
     private var currentPath: String = ""
+
+    /** 当前连接的服务器配置（用于自动重连） */
+    private var currentConfig: ServerConfig? = null
 
     /** 当前是否处于相簿视图（true=相簿层, false=图片层） */
     private var isAlbumView: Boolean = true
@@ -67,6 +88,7 @@ class PhotoViewModel @Inject constructor(
      * 连接到 SMB 服务器并自动开始加载相簿
      */
     fun connect(config: ServerConfig) {
+        currentConfig = config
         viewModelScope.launch {
             _connectionState.value = UiState.Loading
             currentPath = config.rootPath
@@ -101,6 +123,15 @@ class PhotoViewModel @Inject constructor(
                 val albums = repository.listAlbums(currentPath)
                 _albumList.value = if (albums.isEmpty()) UiState.Empty else UiState.Success(albums)
                 Log.d(TAG, "Loaded ${albums.size} albums from path='$currentPath'")
+            } catch (e: ConnectionLostException) {
+                // 连接断开，尝试自动重连
+                Log.w(TAG, "Connection lost, attempting reconnect...")
+                val config = currentConfig
+                if (config != null) {
+                    reconnectAndLoadAlbums(config)
+                } else {
+                    _albumList.value = UiState.Error("连接已断开，请重新选择服务器", e)
+                }
             } catch (e: Exception) {
                 _albumList.value = UiState.Error("加载相簿失败：${e.message}", e)
                 Log.e(TAG, "Failed to load albums", e)
@@ -109,7 +140,28 @@ class PhotoViewModel @Inject constructor(
     }
 
     /**
+     * 重新连接并加载相簿列表
+     */
+    private fun reconnectAndLoadAlbums(config: ServerConfig) {
+        viewModelScope.launch {
+            val result = repository.connect(config)
+            if (result.isSuccess) {
+                Log.i(TAG, "Reconnect successful, loading albums...")
+                val albums = repository.listAlbums(currentPath)
+                _albumList.value = if (albums.isEmpty()) UiState.Empty else UiState.Success(albums)
+            } else {
+                val msg = result.exceptionOrNull()?.message ?: "重新连接失败"
+                _albumList.value = UiState.Error("重新连接失败，请返回后重试：$msg", result.exceptionOrNull())
+            }
+        }
+    }
+
+    /**
      * 加载指定相簿内的图片列表（第二层）
+     *
+     * 加载策略：
+     * - 如果缓存有数据，直接从 Room 加载所有图片（毫秒级）
+     * - 如果缓存为空，从 SMB 扫描并建立索引（首次加载）
      *
      * @param albumPath 相簿/子目录的相对路径
      * @param albumName 相簿名称（避免路径解析失败）
@@ -120,15 +172,74 @@ class PhotoViewModel @Inject constructor(
             albumPath.substringAfterLast('\\').substringAfterLast('/')
         }
         isAlbumView = false
+        // 重置分页状态（不再需要分页，因为一次性加载所有）
+        hasMorePages = false
+        hasMorePagesFlow.value = false
+
         viewModelScope.launch {
             _photoList.value = UiState.Loading
             try {
-                val files = repository.listImagesInAlbum(albumPath)
-                _photoList.value = if (files.isEmpty()) UiState.Empty else UiState.Success(files)
+                // 先获取总数，检查缓存情况
+                totalImageCount = repository.getAlbumImageCount(albumPath)
+                totalImageCountFlow.value = totalImageCount
+                Log.d(TAG, "Total image count in cache: $totalImageCount")
+
+                val files = if (totalImageCount > 0) {
+                    // 缓存已有数据，直接从 Room 加载所有图片（毫秒级）
+                    Log.d(TAG, "Cache hit: loading all images from Room database")
+                    repository.listImagesFromCache(albumPath)
+                } else {
+                    // 缓存为空，需要从 SMB 扫描并建立索引
+                    Log.d(TAG, "Cache miss: scanning album from SMB and building index")
+                    repository.listImagesInAlbumWithIndex(albumPath, null)
+                }
+
+                if (files.isEmpty()) {
+                    _photoList.value = UiState.Empty
+                } else {
+                    _photoList.value = UiState.Success(files)
+                    totalImageCountFlow.value = files.size
+                }
                 Log.d(TAG, "Loaded ${files.size} images from album='$albumPath'")
+            } catch (e: ConnectionLostException) {
+                // 连接断开，尝试自动重连后重新加载
+                Log.w(TAG, "Connection lost while loading album, attempting reconnect...")
+                val config = currentConfig
+                if (config != null) {
+                    reconnectAndLoadAlbumPhotos(config, albumPath)
+                } else {
+                    _photoList.value = UiState.Error("连接已断开，请重新选择服务器", e)
+                }
             } catch (e: Exception) {
                 _photoList.value = UiState.Error("加载图片失败：${e.message}", e)
                 Log.e(TAG, "Failed to load album photos", e)
+            }
+        }
+    }
+
+    /**
+     * 加载更多图片（已弃用，保留向后兼容）
+     * 现在所有图片一次性加载，不再需要分页加载
+     */
+    @Deprecated("All images are now loaded at once from cache")
+    fun loadMorePhotos() {
+        // 不再需要分页加载，所有图片一次性加载完成
+        Log.d(TAG, "loadMorePhotos called but no longer needed - all images loaded at once")
+    }
+
+    /**
+     * 重新连接并加载相簿图片
+     */
+    private fun reconnectAndLoadAlbumPhotos(config: ServerConfig, albumPath: String) {
+        viewModelScope.launch {
+            val result = repository.connect(config)
+            if (result.isSuccess) {
+                Log.i(TAG, "Reconnect successful, loading album photos...")
+                val files = repository.listImagesInAlbum(albumPath)
+                _photoList.value = if (files.isEmpty()) UiState.Empty else UiState.Success(files)
+            } else {
+                val msg = result.exceptionOrNull()?.message ?: "重新连接失败"
+                _photoList.value = UiState.Error("重新连接失败，请返回后重试：$msg", result.exceptionOrNull())
             }
         }
     }
@@ -145,9 +256,35 @@ class PhotoViewModel @Inject constructor(
                 val files = repository.listImageFiles(path)
                 _photoList.value = if (files.isEmpty()) UiState.Empty else UiState.Success(files)
                 Log.d(TAG, "Loaded ${files.size} images from path='$path'")
+            } catch (e: ConnectionLostException) {
+                // 连接断开，尝试自动重连
+                Log.w(TAG, "Connection lost while loading photos, attempting reconnect...")
+                val config = currentConfig
+                if (config != null) {
+                    reconnectAndLoadPhotos(config, path)
+                } else {
+                    _photoList.value = UiState.Error("连接已断开，请重新选择服务器", e)
+                }
             } catch (e: Exception) {
                 _photoList.value = UiState.Error("加载图片失败：${e.message}", e)
                 Log.e(TAG, "Failed to load photos", e)
+            }
+        }
+    }
+
+    /**
+     * 重新连接并加载图片
+     */
+    private fun reconnectAndLoadPhotos(config: ServerConfig, path: String) {
+        viewModelScope.launch {
+            val result = repository.connect(config)
+            if (result.isSuccess) {
+                Log.i(TAG, "Reconnect successful, loading photos...")
+                val files = repository.listImageFiles(path)
+                _photoList.value = if (files.isEmpty()) UiState.Empty else UiState.Success(files)
+            } else {
+                val msg = result.exceptionOrNull()?.message ?: "重新连接失败"
+                _photoList.value = UiState.Error("重新连接失败，请返回后重试：$msg", result.exceptionOrNull())
             }
         }
     }
@@ -191,6 +328,9 @@ class PhotoViewModel @Inject constructor(
     suspend fun browsePath(path: String): List<SmbEntry> {
         return try {
             repository.listEntries(path)
+        } catch (e: ConnectionLostException) {
+            Log.w(TAG, "Connection lost while browsing path: $path")
+            emptyList()
         } catch (e: Exception) {
             Log.e(TAG, "Failed to browse path: $path", e)
             emptyList()
@@ -223,7 +363,9 @@ class PhotoViewModel @Inject constructor(
 
     /**
      * 删除远程文件
-     * @return 操作结果（成功/失败消息）
+     * 删除后清除缓存状态，重新从 SMB 扫描，确保 UI 立即反映最新状态
+     *
+     * @param remotePath 远程文件路径
      */
     fun deleteFile(remotePath: String) {
         if (remotePath.isBlank()) {
@@ -231,10 +373,27 @@ class PhotoViewModel @Inject constructor(
             return
         }
         viewModelScope.launch {
-            repository.deleteFile(remotePath)  // 结果由 refresh() 隐式反映
-            // 刷新当前视图
-            refresh()
+            val albumPath = currentAlbumPath ?: ""
+            // 删除文件并清理 Room 缓存索引
+            repository.deleteFileWithCache(remotePath, albumPath)
+            // 清除缓存状态，强制重新扫描
+            clearPhotoCache()
+            // 重新加载
+            if (albumPath.isNotEmpty()) {
+                loadAlbumPhotos(albumPath)
+            } else {
+                refresh()
+            }
         }
+    }
+
+    /** 清除图片缓存状态，强制下次重新从 SMB 扫描 */
+    private fun clearPhotoCache() {
+        totalImageCount = 0
+        totalImageCountFlow.value = 0
+        currentPage = 0
+        hasMorePages = true
+        hasMorePagesFlow.value = true
     }
 
     /**

@@ -18,6 +18,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.example.smbphoto.R
 import com.example.smbphoto.data.model.SmbImageFile
+import com.example.smbphoto.data.repository.SmbRepository
 import com.example.smbphoto.databinding.ActivityPhotoDetailBinding
 import com.example.smbphoto.glide.VideoThumbnailLoader
 import com.example.smbphoto.smb.SmbManager
@@ -57,6 +58,7 @@ class PhotoDetailActivity : AppCompatActivity() {
     private lateinit var binding: ActivityPhotoDetailBinding
 
     @Inject lateinit var smbManager: SmbManager
+    @Inject lateinit var smbRepository: SmbRepository
 
     private var imageList: MutableList<SmbImageFile> = mutableListOf()
     private var currentPosition: Int = 0
@@ -437,6 +439,15 @@ class PhotoDetailActivity : AppCompatActivity() {
 
     // ============================ 删除当前媒体 ============================
 
+    /**
+     * 从 SmbImageFile.remotePath 提取相簿路径
+     * remotePath 格式：albumName/fileName 或 albumName/subFolder/fileName
+     */
+    private fun extractAlbumPath(remotePath: String): String {
+        return remotePath.substringBeforeLast("\\", "")
+            .substringBeforeLast("/", "")
+    }
+
     private fun deleteCurrentMedia() {
         val mediaFile = imageList.getOrNull(currentPosition) ?: return
 
@@ -447,7 +458,15 @@ class PhotoDetailActivity : AppCompatActivity() {
                 CoroutineScope(Dispatchers.Main).launch {
                     try {
                         showToast("正在删除…")
-                        // 从当前列表移除
+                        // 提取相簿路径用于清除缓存
+                        val albumPath = extractAlbumPath(mediaFile.remotePath)
+                        // 执行 SMB 删除 + Room 缓存清理
+                        val deleted = smbRepository.deleteFileWithCache(mediaFile.remotePath, albumPath)
+                        if (!deleted) {
+                            showToast("删除失败，请检查网络连接后重试")
+                            return@launch
+                        }
+                        // SMB 删除成功后，更新 UI
                         if (imageList.size > 1) {
                             val removePos = currentPosition.coerceIn(0, imageList.size - 1)
                             if (removePos < imageList.size) {
@@ -463,6 +482,9 @@ class PhotoDetailActivity : AppCompatActivity() {
                             }
                             // 安全调整当前位置
                             if (imageList.isEmpty()) {
+                                // 通知调用者并返回
+                                setResult(RESULT_OK, Intent().apply { putExtra("deleted_path", mediaFile.remotePath) })
+                                showToast("已删除：${mediaFile.name}")
                                 finish()
                                 return@launch
                             }
@@ -472,15 +494,11 @@ class PhotoDetailActivity : AppCompatActivity() {
                             updatePageIndicator()
                             showToast("已删除：${mediaFile.name}")
                         } else {
-                            // 最后一张，直接返回
+                            // 最后一张，通知调用者并返回
                             setResult(RESULT_OK, Intent().apply { putExtra("deleted_path", mediaFile.remotePath) })
                             showToast("已删除：${mediaFile.name}")
                             finish()
                         }
-                    } catch (e: IndexOutOfBoundsException) {
-                        android.util.Log.e("PhotoDetail", "Index error during delete, finishing", e)
-                        showToast("已删除，返回中…")
-                        finish()
                     } catch (e: Exception) {
                         showToast("删除失败：${e.message}")
                     }

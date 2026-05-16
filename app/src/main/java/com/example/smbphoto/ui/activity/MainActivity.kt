@@ -1,7 +1,15 @@
 package com.example.smbphoto.ui.activity
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.Environment
+import android.os.Handler
+import android.os.Looper
+import android.provider.Settings
 import android.view.Gravity
 import android.view.Menu
 import android.view.MenuItem
@@ -9,6 +17,7 @@ import android.view.View
 import android.widget.PopupMenu
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
@@ -18,6 +27,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.smbphoto.R
 import com.example.smbphoto.data.model.PhotoAlbum
 import com.example.smbphoto.data.model.SaveResult
@@ -31,6 +41,8 @@ import com.example.smbphoto.ui.adapter.AlbumAdapter
 import com.example.smbphoto.ui.adapter.PhotoAdapter
 import com.example.smbphoto.ui.viewmodel.PhotoViewModel
 import com.example.smbphoto.ui.viewmodel.ServerConfigViewModel
+import com.example.smbphoto.update.UpdateChecker
+import com.example.smbphoto.update.UpdateDialog
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlinx.coroutines.launch
@@ -72,7 +84,41 @@ class MainActivity : AppCompatActivity() {
         private const val STATE_KEY_SERVER_ID = "key_server_id"
         private const val STATE_KEY_VIEW_MODE = "key_view_mode"
         private const val STATE_KEY_ALBUM_PATH = "key_album_path"
+        private const val PREFS_NAME = "smbphoto_prefs"
+        private const val KEY_FIRST_LAUNCH = "first_launch_done"
     }
+
+    // 权限请求 Launcher
+    private val storagePermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val allGranted = permissions.values.all { it }
+        if (allGranted) {
+            android.util.Log.i("MainActivity", "存储权限已授予")
+        } else {
+            android.util.Log.w("MainActivity", "存储权限部分或全部被拒绝")
+            // 仍然继续，因为部分功能可能仍可用
+        }
+        // 权限获取后继续自动连接
+        continueAfterPermissions()
+    }
+
+    // 安装未知应用权限请求 Launcher（跳转到设置页面）
+    private val installPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        // 用户从设置返回后检查是否已授权
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (packageManager.canRequestPackageInstalls()) {
+                android.util.Log.i("MainActivity", "安装未知应用权限已授予")
+            } else {
+                android.util.Log.w("MainActivity", "安装未知应用权限未授予")
+            }
+        }
+    }
+
+    /** 首次启动标记（用于跳过权限检查） */
+    private var isFirstLaunch = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -89,7 +135,8 @@ class MainActivity : AppCompatActivity() {
             observeViewModel()
 
             if (savedInstanceState == null) {
-                attemptAutoConnect()
+                // 检查是否是首次启动
+                checkFirstLaunch()
             } else {
                 // 恢复状态
                 currentServerId = savedInstanceState.getLong(STATE_KEY_SERVER_ID).takeIf { it != 0L }
@@ -108,6 +155,115 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "界面初始化失败：${e.message}", Toast.LENGTH_LONG).show()
             finish()
         }
+    }
+
+    /**
+     * 检查是否是首次启动，并请求必要的权限
+     */
+    private fun checkFirstLaunch() {
+        val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+        isFirstLaunch = prefs.getBoolean(KEY_FIRST_LAUNCH, true)
+
+        if (isFirstLaunch) {
+            android.util.Log.i("MainActivity", "首次启动，请求必要权限...")
+            // 标记首次启动已完成（即使权限被拒绝也标记，避免每次都弹窗）
+            prefs.edit().putBoolean(KEY_FIRST_LAUNCH, false).apply()
+            // 请求存储和网络权限
+            requestRequiredPermissions()
+        } else {
+            android.util.Log.i("MainActivity", "非首次启动，跳过权限请求")
+            continueAfterPermissions()
+        }
+    }
+
+    /**
+     * 请求必要的运行时权限
+     */
+    private fun requestRequiredPermissions() {
+        val permissionsToRequest = mutableListOf<String>()
+
+        // Android 13+ (API 33+) 需要 READ_MEDIA_IMAGES
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_IMAGES)
+                != PackageManager.PERMISSION_GRANTED) {
+                permissionsToRequest.add(Manifest.permission.READ_MEDIA_IMAGES)
+            }
+            // Android 14+ 还需要 POST_NOTIFICATIONS 用于通知
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                    permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            }
+        } else {
+            // Android 6-12 需要 READ_EXTERNAL_STORAGE
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+                permissionsToRequest.add(Manifest.permission.READ_EXTERNAL_STORAGE)
+            }
+        }
+
+        if (permissionsToRequest.isNotEmpty()) {
+            android.util.Log.i("MainActivity", "请求权限: $permissionsToRequest")
+            storagePermissionLauncher.launch(permissionsToRequest.toTypedArray())
+        } else {
+            android.util.Log.i("MainActivity", "权限已全部授予，继续执行")
+            continueAfterPermissions()
+        }
+    }
+
+    /**
+     * 权限获取完成后继续执行后续操作
+     */
+    private fun continueAfterPermissions() {
+        android.util.Log.i("MainActivity", "权限处理完成，开始后续操作...")
+        // 检查安装未知应用权限
+        checkInstallPermission()
+        // 自动连接
+        attemptAutoConnect()
+        // 检查更新
+        checkForUpdate()
+    }
+
+    /**
+     * 检查并请求安装未知应用权限（Android 8.0+）
+     */
+    private fun checkInstallPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (!packageManager.canRequestPackageInstalls()) {
+                android.util.Log.w("MainActivity", "需要安装未知应用权限，显示引导对话框")
+                showInstallPermissionDialog()
+            } else {
+                android.util.Log.i("MainActivity", "安装未知应用权限已授权")
+            }
+        }
+    }
+
+    /**
+     * 显示安装未知应用权限引导对话框
+     */
+    private fun showInstallPermissionDialog() {
+        // 只有在有更新或者需要安装时才提示，避免骚扰用户
+        AlertDialog.Builder(this)
+            .setTitle("需要安装权限")
+            .setMessage("为了安装应用更新，需要您开启「安装未知应用」权限。\n\n点击确定将跳转到设置页面，找到本应用并开启「允许安装未知应用」。")
+            .setPositiveButton("确定") { _, _ ->
+                try {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        val intent = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES)
+                        intent.data = Uri.parse("package:$packageName")
+                        installPermissionLauncher.launch(intent)
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("MainActivity", "跳转到设置失败", e)
+                    Toast.makeText(this, "无法打开设置，请手动开启安装权限", Toast.LENGTH_LONG).show()
+                }
+            }
+            .setNegativeButton("稍后") { _, _ ->
+                android.util.Log.i("MainActivity", "用户选择稍后开启安装权限")
+            }
+            .setCancelable(true)
+            .show()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -201,6 +357,7 @@ class MainActivity : AppCompatActivity() {
             layoutManager = GridLayoutManager(this@MainActivity, calculatePhotoSpanCount())
             adapter = photoAdapter
             setHasFixedSize(true)
+            // 不再需要滚动监听器，所有图片一次性加载完成
         }
     }
 
@@ -278,6 +435,21 @@ class MainActivity : AppCompatActivity() {
                                 is UiState.Success -> showPhotos(state.data)
                                 is UiState.Empty -> showEmpty(getString(R.string.empty_album_photos_hint))
                                 is UiState.Error -> showError(state.message)
+                            }
+                        }
+                    }
+                }
+
+                // 观察加载更多状态
+                launch {
+                    viewModel.isLoadingMoreFlow.collect { isLoading ->
+                        _binding?.let {
+                            if (isLoading) {
+                                it.progressBar.visibility = View.VISIBLE
+                                it.tvStatus.text = "正在加载更多..."
+                                it.tvStatus.visibility = View.VISIBLE
+                            } else {
+                                it.tvStatus.visibility = View.GONE
                             }
                         }
                     }
@@ -401,6 +573,7 @@ class MainActivity : AppCompatActivity() {
      *
      * 从图片列表中提取日期分组，生成可点击的日期标签。
      * 点击日期标签可快速跳转到对应位置。
+     * 时间优先使用 EXIF 拍摄时间（takenAt），其次使用文件修改时间（lastModified）。
      */
     private fun buildTimeline(photos: List<SmbImageFile>) {
         val container = binding.timelineContainer
@@ -411,12 +584,13 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        // 按日期分组（取 lastModified 的日期部分）
+        // 按日期分组（优先使用 EXIF 拍摄时间，回退到文件修改时间）
         val dateFormat = SimpleDateFormat("yyyy年MM月dd日", Locale.CHINA)
         val monthFormat = SimpleDateFormat("MM月dd日", Locale.CHINA)
         val dateGroups = photos.groupBy { item ->
-            if (item.lastModified > 0) {
-                dateFormat.format(Date(item.lastModified))
+            val ts = item.bestTimestamp  // 优先 EXIF 拍摄时间
+            if (ts > 0) {
+                dateFormat.format(Date(ts))
             } else {
                 "未知日期"
             }
@@ -432,8 +606,8 @@ class MainActivity : AppCompatActivity() {
                 R.layout.item_timeline_date, container, false
             ) as TextView
 
-            // 显示简短格式（节省空间）
-            val timestamp = itemsInGroup.firstOrNull()?.lastModified ?: 0L
+            // 显示简短格式（节省空间）；优先使用该组第一张的 EXIF 拍摄时间
+            val timestamp = itemsInGroup.firstOrNull()?.bestTimestamp ?: 0L
             val displayTime = if (timestamp > 0) timestamp else System.currentTimeMillis()
             textView.text = monthFormat.format(Date(displayTime))
 
@@ -836,7 +1010,9 @@ class MainActivity : AppCompatActivity() {
                 .setTitle(getString(R.string.app_name))
                 .setMessage(getString(R.string.exit_confirm_message))
                 .setPositiveButton(getString(R.string.exit_positive)) { _, _ ->
-                    super.onBackPressedDispatcher.onBackPressed()
+                    // 真正退出应用，结束所有线程和释放资源
+                    finishAffinity()
+                    System.exit(0)
                 }
                 .setNegativeButton(getString(R.string.exit_negative), null)
                 .show()
@@ -846,5 +1022,37 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         _binding = null
+    }
+
+    // ==================== 软件更新 ====================
+
+    /**
+     * 检查软件更新
+     * 每次打开 App 都检测，不限制频率
+     */
+    private fun checkForUpdate() {
+        android.util.Log.i("MainActivity", "开始检查应用更新...")
+        lifecycleScope.launch {
+            UpdateChecker.checkUpdate(this@MainActivity) { updateInfo ->
+                android.util.Log.i("MainActivity", "更新检查回调，updateInfo = $updateInfo")
+                if (updateInfo != null && updateInfo.isNewer) {
+                    android.util.Log.i("MainActivity", "发现新版本: ${updateInfo.versionName}")
+                    // 显示更新对话框
+                    showUpdateDialog(updateInfo)
+                }
+            }
+        }
+    }
+
+    /**
+     * 显示更新对话框
+     */
+    private fun showUpdateDialog(updateInfo: com.example.smbphoto.update.UpdateInfo) {
+        try {
+            val dialog = UpdateDialog(this, updateInfo)
+            dialog.show()
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "显示更新对话框失败", e)
+        }
     }
 }

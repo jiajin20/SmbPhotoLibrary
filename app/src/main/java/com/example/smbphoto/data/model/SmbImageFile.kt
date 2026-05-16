@@ -9,7 +9,8 @@ data class SmbImageFile(
     val name: String,           // 文件名，如 "photo.jpg"
     val remotePath: String,     // 完整远程路径，如 "photos/2024/photo.jpg"
     val fileSize: Long,         // 文件大小（字节）
-    val lastModified: Long = 0L // 最后修改时间（Unix 毫秒）
+    val lastModified: Long = 0L, // 最后修改时间（Unix 毫秒，来自 SMB 文件属性）
+    val takenAt: Long = 0L      // 拍摄时间（Unix 毫秒，来自 EXIF DateTimeOriginal；0 表示无 EXIF）
 ) : Serializable {
     companion object {
         private const val serialVersionUID = 1L
@@ -22,7 +23,8 @@ data class SmbImageFile(
         get() = name.lowercase().let { n ->
             n.endsWith(".jpg") || n.endsWith(".jpeg") ||
             n.endsWith(".png") || n.endsWith(".webp") ||
-            n.endsWith(".gif") || n.endsWith(".bmp")
+            n.endsWith(".gif") || n.endsWith(".bmp") ||
+            n.endsWith(".heic") || n.endsWith(".heif")
         }
 
     /** 是否为支持的视频格式 */
@@ -36,4 +38,10 @@ data class SmbImageFile(
 
     /** 是否为媒体文件（图片或视频） */
     val isMedia: Boolean get() = isImage || isVideo
+
+    /**
+     * 用于时间轴/排序的"最佳时间戳"：
+     * 优先使用 EXIF 拍摄时间（takenAt），不可用时回退到文件修改时间（lastModified）
+     */
+    val bestTimestamp: Long get() = if (takenAt > 0L) takenAt else lastModified
 }

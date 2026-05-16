@@ -1,11 +1,13 @@
 package com.example.smbphoto.glide
 
+import android.graphics.Bitmap
 import android.content.Context
 import android.util.Log
 import com.bumptech.glide.Glide
 import com.bumptech.glide.GlideBuilder
 import com.bumptech.glide.Registry
 import com.bumptech.glide.annotation.GlideModule
+import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool
 import com.bumptech.glide.load.engine.cache.InternalCacheDiskCacheFactory
 import com.bumptech.glide.module.AppGlideModule
 import com.example.smbphoto.data.model.SmbImageFile
@@ -56,7 +58,12 @@ class SmbGlideModule : AppGlideModule() {
                 InputStream::class.java,
                 SmbModelLoader.Factory(smbManager)
             )
-            Log.i(TAG, "SMB ModelLoader registered successfully")
+
+            // 注册 HEIC/HEIF 解码器（在默认 StreamBitmapDecoder 之前，优先处理 HEIC）
+            val heicDecoder = HeicBitmapDecoder(glide.bitmapPool)
+            registry.prepend(InputStream::class.java, Bitmap::class.java, heicDecoder)
+
+            Log.i(TAG, "SMB ModelLoader + HEIC decoder registered successfully")
         } catch (e: Exception) {
             // 关键修复：捕获所有异常，防止应用启动崩溃
             // 如果 Hilt 未就绪，Glide 仍然可以正常工作（只是无法加载 SMB 图片）

@@ -6,13 +6,21 @@
         android:id="@+id/action_refresh"
         android:icon="@android:drawable/ic_menu_rotate"
         android:title="@string/menu_refresh"
-        app:showAsAction="always"
+        app:showAsAction="ifRoom"
         app:actionLayout="@layout/action_refresh_with_text" />
+
+<!--    <item-->
+<!--        android:id="@+id/action_connect"-->
+<!--        android:icon="@android:drawable/ic_menu_manage"-->
+<!--        android:title="@string/menu_configure"-->
+<!--        app:showAsAction="never" />-->
+
 
     <item
         android:id="@+id/action_connect"
         android:icon="@android:drawable/ic_menu_manage"
         android:title="@string/menu_configure"
+        android:iconTint="?android:attr/textColorPrimary"
         app:showAsAction="never" />
 
 </menu>

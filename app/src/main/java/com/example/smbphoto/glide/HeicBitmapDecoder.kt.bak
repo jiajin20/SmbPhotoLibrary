@@ -1,0 +1,139 @@
+package com.example.smbphoto.glide
+
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.os.Build
+import android.util.Log
+import com.bumptech.glide.load.Options
+import com.bumptech.glide.load.ResourceDecoder
+import com.bumptech.glide.load.engine.Resource
+import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool
+import com.bumptech.glide.load.resource.bitmap.BitmapResource
+import com.bumptech.glide.util.ByteBufferUtil
+import java.io.IOException
+import java.io.InputStream
+
+private const val TAG = "HeicBitmapDecoder"
+
+/**
+ * Glide ResourceDecoder：支持 HEIC/HEIF 格式图片解码
+ *
+ * 工作流程：
+ * 1. 通过 HEIC 文件头魔数 (ftyp heic/mif1/hevc) 判断是否为 HEIC 格式
+ * 2. Android 9+：使用 ImageDecoder 解码（系统原生支持）
+ * 3. Android 8 及以下：尝试 BitmapFactory 回退（大部分设备不支持）
+ * 4. 非 HEIC 格式：直接返回 null，交给 Glide 默认 Decoder 处理
+ *
+ * 注册方式：prepend 到 InputStream -> Bitmap 解码链最前端，
+ * 非 HEIC 数据会快速跳过，不影响其他格式性能。
+ */
+class HeicBitmapDecoder(
+    private val bitmapPool: BitmapPool
+) : ResourceDecoder<InputStream, Bitmap> {
+
+    /** HEIC/HEIF 文件的 ftyp 值 */
+    private val heicFtyps = arrayOf("heic", "heix", "heim", "heis", "hevm", "hevs", "mif1", "msf1", "avci", "avcs")
+
+    override fun handles(source: InputStream, options: Options): Boolean = true
+
+    override fun decode(source: InputStream, width: Int, height: Int, options: Options): Resource<Bitmap>? {
+        val dataBytes = try {
+            // 读取文件头检测格式
+            source.mark(SIGNATURE_SIZE)
+            val header = ByteArray(SIGNATURE_SIZE)
+            val bytesRead = source.read(header)
+            if (bytesRead < SIGNATURE_SIZE) {
+                source.reset()
+                return null
+            }
+            if (!isHeicSignature(header)) {
+                // 不是 HEIC，重置流并返回 null 让下游 decoder 处理
+                source.reset()
+                return null
+            }
+            // 是 HEIC，读取全部数据
+            source.reset()
+            source.readBytes()
+        } catch (e: IOException) {
+            Log.e(TAG, "Failed to read input stream for HEIC detection", e)
+            return null
+        }
+
+        if (dataBytes.isEmpty()) {
+            Log.w(TAG, "Empty HEIC data")
+            return null
+        }
+
+        val bitmap = decodeHeic(dataBytes) ?: run {
+            Log.w(TAG, "Failed to decode HEIC image (${dataBytes.size} bytes)")
+            return null
+        }
+
+        Log.d(TAG, "HEIC decoded successfully: ${bitmap.width}x${bitmap.height}")
+        return BitmapResource.obtain(bitmap, bitmapPool)
+    }
+
+    /**
+     * 通过 ISOBMFF (ISO Base Media File Format) 的 ftyp box 检测 HEIC/HEIF 文件
+     *
+     * HEIC/HEIF 文件头结构：
+     * - bytes[0..3]: box size (big-endian int)
+     * - bytes[4..7]: "ftyp"
+     * - bytes[8..11]: major_brand (如 "heic", "mif1" 等)
+     */
+    private fun isHeicSignature(header: ByteArray): Boolean {
+        if (header.size < SIGNATURE_SIZE) return false
+        // 检查 ftyp box 标识
+        if (header[4].toInt() and 0xFF != 'f'.code ||
+            header[5].toInt() and 0xFF != 't'.code ||
+            header[6].toInt() and 0xFF != 'y'.code ||
+            header[7].toInt() and 0xFF != 'p'.code) {
+            return false
+        }
+        // 提取 major_brand (bytes[8..11])
+        val brand = String(header, 8, 4, Charsets.US_ASCII).lowercase()
+        return brand in heicFtyps
+    }
+
+    private fun decodeHeic(data: ByteArray): Bitmap? {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            decodeWithImageDecoder(data)
+        } else {
+            decodeWithBitmapFactory(data)
+        }
+    }
+
+    @androidx.annotation.RequiresApi(Build.VERSION_CODES.P)
+    private fun decodeWithImageDecoder(data: ByteArray): Bitmap? {
+        return try {
+            val byteBuffer = java.nio.ByteBuffer.wrap(data)
+            val source = android.graphics.ImageDecoder.createSource(byteBuffer)
+            android.graphics.ImageDecoder.decodeBitmap(source) { info, _, _ ->
+                // 使用紧凑的内存分配（与 Glide 的 override 尺寸配合）
+                android.graphics.ImageDecoder.ALLOCATOR_SOFTWARE
+            }.also { bitmap ->
+                Log.d(TAG, "HEIC decoded via ImageDecoder: ${bitmap.width}x${bitmap.height}")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "ImageDecoder failed, trying BitmapFactory fallback", e)
+            decodeWithBitmapFactory(data)
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun decodeWithBitmapFactory(data: ByteArray): Bitmap? {
+        return try {
+            BitmapFactory.decodeByteArray(data, 0, data.size)?.also {
+                Log.d(TAG, "HEIC decoded via BitmapFactory fallback: ${it.width}x${it.height}")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "BitmapFactory also failed for HEIC", e)
+            null
+        }
+    }
+
+    companion object {
+        /** 用于检测文件头的最小字节数 (ftyp box = 12字节) */
+        private const val SIGNATURE_SIZE = 12
+    }
+}

@@ -4,4 +4,6 @@
     <cache-path name="share_cache" path="share" />
     <!-- 外部缓存目录 -->
     <external-cache-path name="external_share_cache" path="share" />
+    <!-- APK 更新下载目录 -->
+    <external-files-path name="updates" path="updates/" />
 </paths>
