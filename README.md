@@ -184,7 +184,7 @@ APK 输出路径：`app/build/outputs/apk/debug/app-debug.apk`
 
 | 版本 | 修复内容 |
 |------|----------|
-| v1.0.0 | **正式版** 修复视频播放完全失效问题：HTTP chunked encoding 格式错误、SMB 文件大小读取失败（size=0）、per-chunk flush 导致数据丢失；修复应用假死卡顿（SmbConnectionPool.tryReconnect 持有锁 30 秒） |
+| v1.0.0beta | **正式版** 修复视频播放完全失效问题：HTTP chunked encoding 格式错误、SMB 文件大小读取失败（size=0）、per-chunk flush 导致数据丢失；修复应用假死卡顿（SmbConnectionPool.tryReconnect 持有锁 30 秒） |
 | v1.1beta（未发布） | 修复相簿无法显示 HEIC 格式照片（`SmbManager.isMediaFile()` 漏掉 `.heic/.heif` 扩展名） |
 | v1.2beta（未发布） | 修复时间轴使用文件创建时间的问题，改为优先读取 EXIF 拍摄时间（`DateTimeOriginal`） |
 | v1.3beta（未发布） | 修复相簿列表加载时陷入循环的问题：扫描相簿时跳过 EXIF 读取以提升性能，EXIF 仅在进入相簿查看具体图片时才读取 |
